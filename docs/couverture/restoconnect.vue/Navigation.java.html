@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Navigation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.vue</a> &gt; <span class="el_source">Navigation.java</span></div><h1>Navigation.java</h1><pre class="source lang-java linenums">package restoconnect.vue;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.*;
+import javafx.stage.Stage;
+import restoconnect.controleur.EcranControleur;
+import restoconnect.service.RestaurantService;
+import restoconnect.modele.*;
+import java.time.LocalDateTime;
+import java.io.IOException;
+/** Contexte de navigation : ne contient ni calcul de prix ni règle de réservation. */
+public class Navigation {
+    private final Stage fenetre;
+    private final RestaurantService service;
+    private LocalDateTime debut;
+    private int personnes;
+    private Client client;
+    private Table table;
+    private Commande commande;
+    /**
+     * @param fenetre fenêtre
+     * @param service façade métier */
+<span class="nc" id="L22">    public Navigation(Stage fenetre, RestaurantService service) { this.fenetre = fenetre; this.service = service; }</span>
+    /**
+     * @param ecran nom FXML de l'écran
+     * @throws IOException si la vue est illisible */
+    public void afficher(String ecran) throws IOException {
+<span class="nc" id="L27">        FXMLLoader chargeur = new FXMLLoader(getClass().getResource(&quot;/restoconnect/vue/&quot; + ecran + &quot;.fxml&quot;));</span>
+<span class="nc" id="L28">        chargeur.setControllerFactory(type -&gt; new EcranControleur(this));</span>
+<span class="nc" id="L29">        Parent racine = chargeur.load();</span>
+<span class="nc" id="L30">        Scene scene = new Scene(racine, 980, 700);</span>
+<span class="nc" id="L31">        scene.getStylesheets().add(getClass().getResource(&quot;/restoconnect/vue/style.css&quot;).toExternalForm());</span>
+<span class="nc" id="L32">        fenetre.setScene(scene);</span>
+<span class="nc" id="L33">        fenetre.setTitle(&quot;RestoConnect — &quot; + ecran);</span>
+<span class="nc" id="L34">        fenetre.show();</span>
+<span class="nc" id="L35">    }</span>
+    /**
+     * @return façade métier */
+<span class="nc" id="L38">    public RestaurantService getService() { return service; }</span>
+    /**
+     * @param debut date validée
+     * @param personnes effectif validé
+     * @param client client
+     * @param table table */
+    public void preparer(LocalDateTime debut, int personnes, Client client, Table table) {
+<span class="nc" id="L45">        this.debut = debut; this.personnes = personnes; this.client = client; this.table = table; this.commande = null;</span>
+<span class="nc" id="L46">    }</span>
+    /**
+     * @return début de la demande */
+<span class="nc" id="L49">    public LocalDateTime getDebut() { return debut; }</span>
+    /**
+     * @return effectif de la demande */
+<span class="nc" id="L52">    public int getPersonnes() { return personnes; }</span>
+    /**
+     * @return client choisi */
+<span class="nc" id="L55">    public Client getClient() { return client; }</span>
+    /**
+     * @return table choisie */
+<span class="nc" id="L58">    public Table getTable() { return table; }</span>
+    /**
+     * @return commande active, éventuellement absente */
+<span class="nc" id="L61">    public java.util.Optional&lt;Commande&gt; getCommande() { return java.util.Optional.ofNullable(commande); }</span>
+    /**
+     * @param commande commande choisie */
+<span class="nc" id="L64">    public void setCommande(Commande commande) { this.commande = commande; }</span>
+    /**
+     * @return fenêtre principale */
+<span class="nc" id="L67">    public Stage getFenetre() { return fenetre; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

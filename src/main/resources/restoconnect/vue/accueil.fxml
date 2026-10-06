@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="restoconnect.controleur.EcranControleur">
+ <top><HBox spacing="20" styleClass="bandeau"><Label text="RestoConnect" styleClass="marque"/><Label text="Gestion du restaurant" styleClass="sous-titre"/></HBox></top>
+ <center><VBox spacing="22" styleClass="contenu">
+ <Label text="Bienvenue au restaurant" styleClass="titre"/>
+ <Label text="Recherchez une table, prenez une commande puis éditez sa facture." wrapText="true"/>
+ <Button text="Nouvelle réservation" onAction="#ouvrirPlan" styleClass="principal"/>
+ <Separator/><Label text="Commandes et factures enregistrées" styleClass="titre-secondaire"/>
+ <ComboBox fx:id="historique" prefWidth="700" promptText="Choisir une commande"/>
+ <Button text="Consulter / reprendre" onAction="#reprendre"/>
+ <Label fx:id="erreur" styleClass="erreur" wrapText="true"/>
+</VBox></center>
+ <bottom><HBox spacing="12" styleClass="pied"><Button text="Accueil" onAction="#ouvrirAccueil"/><Button text="Plan de salle" onAction="#ouvrirPlan"/><Label text="Réservations de 2 heures • Prix en euros"/></HBox></bottom>
+</BorderPane>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CommandeService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.service</a> &gt; <span class="el_source">CommandeService.java</span></div><h1>CommandeService.java</h1><pre class="source lang-java linenums">package restoconnect.service;
+import restoconnect.modele.*;
+/** Opérations polymorphes et facturation des commandes. */
+public class CommandeService {
+    private static final int SEUIL_GROUPE = 10;
+    private static final double TAUX_REMISE_GROUPE = 0.10;
+    /** Construit le service de commande. */
+<span class="fc" id="L8">    public CommandeService() { }</span>
+    /**
+     * @param article article obligatoire, de n'importe quelle catégorie
+     * @return prix TTC */
+<span class="fc" id="L12">    public double calculerPrixArticle(ArticleMenu article) { return Validation.requis(article, &quot;Article&quot;).calculerPrixTTC(); }</span>
+    /**
+     * @param reservation réservation
+     * @param serveur serveur
+     * @param article première ligne
+     * @param quantite quantité positive
+     * @return commande non vide */
+    public Commande creerCommande(Reservation reservation, Serveur serveur, ArticleMenu article, int quantite) {
+<span class="fc" id="L20">        Validation.requis(reservation, &quot;Réservation&quot;);</span>
+<span class="fc" id="L21">        Validation.requis(serveur, &quot;Serveur&quot;);</span>
+<span class="fc" id="L22">        Validation.requis(article, &quot;Article&quot;);</span>
+<span class="fc" id="L23">        Validation.positif(quantite);</span>
+<span class="fc" id="L24">        return new Commande(reservation, serveur, article, quantite);</span>
+    }
+    /**
+     * @param commande commande ouverte
+     * @param article article requis
+     * @param quantite quantité positive */
+    public void ajouterArticle(Commande commande, ArticleMenu article, int quantite) {
+<span class="fc" id="L31">        Validation.requis(commande, &quot;Commande&quot;);</span>
+<span class="fc" id="L32">        Validation.requis(article, &quot;Article&quot;);</span>
+<span class="fc" id="L33">        Validation.positif(quantite);</span>
+<span class="fc" id="L34">        commande.ajouterLigne(article, quantite);</span>
+<span class="fc" id="L35">    }</span>
+    /**
+     * Précondition : commande non nulle contenant une ligne au minimum.
+     * Postcondition : total positif, tenant compte des prix figés et de la remise.
+     *
+     * @param commande commande requise
+     * @return total TTC
+     */
+    public double calculerMontantCommande(Commande commande) {
+<span class="fc" id="L44">        Validation.requis(commande, &quot;Commande&quot;);</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if (commande.getLigneCommandes().isEmpty()) { throw new IllegalArgumentException(&quot;Une commande sans ligne est interdite.&quot;); }</span>
+<span class="fc" id="L46">        return commande.calculerTotal();</span>
+    }
+    /**
+     * Précondition : commande non nulle, ouverte et non vide.
+     * Postcondition : commande clôturée, facture stable ; un deuxième appel est refusé.
+     *
+     * @param commande commande à clôturer
+     * @return montant facturé
+     */
+    public double cloturerCommande(Commande commande) {
+<span class="fc" id="L56">        Validation.requis(commande, &quot;Commande&quot;);</span>
+<span class="fc" id="L57">        commande.cloturer();</span>
+<span class="fc" id="L58">        return commande.calculerTotal();</span>
+    }
+    /**
+     * @param commande commande ouverte
+     * @param nombrePersonnes convives
+     * @return montant après remise */
+    public double appliquerRemiseGroupe(Commande commande, int nombrePersonnes) {
+<span class="fc" id="L65">        Validation.requis(commande, &quot;Commande&quot;);</span>
+<span class="fc" id="L66">        Validation.positif(nombrePersonnes);</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (nombrePersonnes != commande.getReservation().getNombrePersonnes()) {</span>
+<span class="fc" id="L68">            throw new IllegalArgumentException(&quot;L'effectif doit correspondre à la réservation.&quot;);</span>
+        }
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        commande.setRemise(nombrePersonnes &gt;= SEUIL_GROUPE ? TAUX_REMISE_GROUPE : 0);</span>
+<span class="fc" id="L71">        return commande.calculerTotal();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TransactionService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.service</a> &gt; <span class="el_source">TransactionService.java</span></div><h1>TransactionService.java</h1><pre class="source lang-java linenums">package restoconnect.service;
+import org.hibernate.*;
+import jakarta.persistence.LockModeType;
+import restoconnect.modele.*;
+import restoconnect.exceptions.*;
+import restoconnect.persistance.ValidationEntite;
+import java.time.*;
+import java.util.function.Consumer;
+import java.util.logging.*;
+/** Réservation et commande atomiques ; verrouillage de la table contre les demandes concurrentes. */
+public class TransactionService {
+<span class="fc" id="L12">    private static final Logger JOURNAL = Logger.getLogger(TransactionService.class.getName());</span>
+    private final SessionFactory fabrique;
+    private final Clock horloge;
+    private final Consumer&lt;Session&gt; apresReservation;
+    /**
+     * @param fabrique fabrique Hibernate */
+<span class="fc" id="L18">    public TransactionService(SessionFactory fabrique) { this(fabrique, Clock.systemDefaultZone(), s -&gt; { }); }</span>
+    /**
+     * @param fabrique fabrique
+     * @param horloge horloge
+     * @param apresReservation point d'injection d'un échec pour le test d'atomicité */
+<span class="fc" id="L23">    public TransactionService(SessionFactory fabrique, Clock horloge, Consumer&lt;Session&gt; apresReservation) {</span>
+<span class="fc" id="L24">        this.fabrique = Validation.requis(fabrique, &quot;Fabrique&quot;);</span>
+<span class="fc" id="L25">        this.horloge = Validation.requis(horloge, &quot;Horloge&quot;);</span>
+<span class="fc" id="L26">        this.apresReservation = Validation.requis(apresReservation, &quot;Action&quot;);</span>
+<span class="fc" id="L27">    }</span>
+    /**
+     * Préconditions : demande future, objets persistés, article et quantité valides.
+     * Postcondition : réservation et commande sont toutes deux persistées, ou aucune ne l'est.
+     *
+     * @param date début
+     * @param personnes convives
+     * @param client client
+     * @param table table
+     * @param serveur serveur
+     * @param article article
+     * @param quantite quantité
+     *
+     * @return commande sauvegardée
+     *
+     * @throws TableIndisponibleException si un créneau se chevauche
+     */
+    public Commande reserverEtCommander(LocalDateTime date, int personnes, Client client, Table table,
+            Serveur serveur, ArticleMenu article, int quantite) throws TableIndisponibleException {
+<span class="fc" id="L46">        new ReservationService(horloge).validerDemande(date, personnes, client, table);</span>
+<span class="fc" id="L47">        Validation.requis(serveur, &quot;Serveur&quot;); Validation.requis(article, &quot;Article&quot;); Validation.positif(quantite);</span>
+<span class="pc" id="L48">        long tableId = table.getId().orElseThrow(() -&gt; new IllegalArgumentException(&quot;La table doit être sauvegardée.&quot;));</span>
+<span class="pc" id="L49">        long clientId = client.getId().orElseThrow(() -&gt; new IllegalArgumentException(&quot;Le client doit être sauvegardé.&quot;));</span>
+<span class="pc" id="L50">        long serveurId = serveur.getId().orElseThrow(() -&gt; new IllegalArgumentException(&quot;Le serveur doit être sauvegardé.&quot;));</span>
+<span class="pc" id="L51">        long articleId = article.getId().orElseThrow(() -&gt; new IllegalArgumentException(&quot;L'article doit être sauvegardé.&quot;));</span>
+<span class="fc" id="L52">        try (Session session = fabrique.openSession()) {</span>
+<span class="fc" id="L53">            Transaction transaction = session.beginTransaction();</span>
+            try {
+<span class="fc" id="L55">                Table tableGeree = session.find(Table.class, tableId, LockModeType.PESSIMISTIC_WRITE);</span>
+<span class="fc" id="L56">                Client clientGere = session.get(Client.class, clientId);</span>
+<span class="fc" id="L57">                Serveur serveurGere = session.get(Serveur.class, serveurId);</span>
+<span class="fc" id="L58">                ArticleMenu articleGere = session.get(ArticleMenu.class, articleId);</span>
+<span class="fc" id="L59">                new ReservationService(horloge).validerDemande(date, personnes, clientGere, tableGeree);</span>
+<span class="fc" id="L60">                Validation.requis(serveurGere, &quot;Serveur en base&quot;); Validation.requis(articleGere, &quot;Article en base&quot;);</span>
+<span class="fc" id="L61">                long conflits = session.createQuery(&quot;select count(r) from Reservation r where r.table.id = :table and r.dateHeure &lt; :fin and r.dateHeure &gt; :debutMoinsDeux&quot;, Long.class)</span>
+<span class="fc" id="L62">                        .setParameter(&quot;table&quot;, tableId).setParameter(&quot;fin&quot;, date.plusHours(2)).setParameter(&quot;debutMoinsDeux&quot;, date.minusHours(2)).getSingleResult();</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">                if (conflits &gt; 0) { throw new TableIndisponibleException(&quot;Cette table est déjà réservée sur ce créneau.&quot;); }</span>
+<span class="fc" id="L64">                Reservation reservation = new Reservation(date, personnes, clientGere, tableGeree);</span>
+<span class="fc" id="L65">                ValidationEntite.verifier(reservation);</span>
+<span class="fc" id="L66">                session.persist(reservation);</span>
+<span class="fc" id="L67">                session.flush();</span>
+<span class="fc" id="L68">                apresReservation.accept(session);</span>
+<span class="fc" id="L69">                Commande commande = new CommandeService().creerCommande(reservation, serveurGere, articleGere, quantite);</span>
+<span class="fc" id="L70">                ValidationEntite.verifier(commande);</span>
+<span class="fc" id="L71">                session.persist(commande);</span>
+<span class="fc" id="L72">                transaction.commit();</span>
+<span class="fc" id="L73">                return commande;</span>
+<span class="fc" id="L74">            } catch (TableIndisponibleException erreur) {</span>
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">                if (transaction.isActive()) { transaction.rollback(); }</span>
+<span class="fc" id="L76">                JOURNAL.log(Level.WARNING, erreur.getMessage(), erreur); throw erreur;</span>
+<span class="fc" id="L77">            } catch (RuntimeException erreur) {</span>
+<span class="pc bpc" id="L78" title="1 of 2 branches missed.">                if (transaction.isActive()) { transaction.rollback(); }</span>
+<span class="fc" id="L79">                JOURNAL.log(Level.SEVERE, &quot;Transaction réservation et commande annulée.&quot;, erreur);</span>
+<span class="fc" id="L80">                throw new PersistanceException(&quot;La réservation et la commande ont été annulées.&quot;, erreur);</span>
+<span class="fc" id="L81">            } finally { JOURNAL.info(&quot;Tentative de réservation et commande terminée.&quot;); }</span>
+<span class="fc" id="L82">        } catch (PersistanceException erreur) {</span>
+<span class="fc" id="L83">            JOURNAL.log(Level.SEVERE, erreur.getMessage(), erreur); throw erreur;</span>
+<span class="nc" id="L84">        } catch (RuntimeException erreur) {</span>
+<span class="nc" id="L85">            JOURNAL.log(Level.SEVERE, &quot;Base indisponible.&quot;, erreur);</span>
+<span class="nc" id="L86">            throw new PersistanceException(&quot;La base de données est indisponible.&quot;, erreur);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Commande.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.modele</a> &gt; <span class="el_source">Commande.java</span></div><h1>Commande.java</h1><pre class="source lang-java linenums">package restoconnect.modele;
+
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Représente une commande prise en salle.
+ *
+ * Une commande est liée à une réservation et à un serveur.
+ * Elle contient une ou plusieurs lignes de commande.
+ */
+<span class="fc" id="L15">@Entity</span>
+public class Commande {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /** Constructeur réservé à Hibernate. */
+<span class="fc" id="L23">    protected Commande() { }</span>
+
+    /**
+     * @return identifiant technique, vide avant la première sauvegarde */
+    public java.util.Optional&lt;Long&gt; getId() {
+<span class="fc" id="L28">        return java.util.Optional.ofNullable(id);</span>
+    }
+
+
+    @OneToOne(optional = false, fetch = FetchType.EAGER)
+    private Reservation reservation;
+    // Association : le serveur prend en charge la commande.
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    private Serveur serveur;
+<span class="fc" id="L37">    @ElementCollection(fetch = FetchType.EAGER)</span>
+    @CollectionTable(name = &quot;lignes_commande&quot;, joinColumns = @JoinColumn(name = &quot;commande_id&quot;))
+    @OrderColumn(name = &quot;position_ligne&quot;)
+    private List&lt;LigneCommande&gt; ligneCommandes = new ArrayList&lt;&gt;();
+
+    @Column(nullable = false)
+    private boolean cloturee;
+    @Column(nullable = false)
+    private double remise;
+    @Column(nullable = false)
+    private double montantFacture;
+
+    /**
+     * Construit une commande avec une première ligne.
+     *
+     * Le fait de demander une première ligne dans le constructeur
+     * permet de respecter l'invariant du sujet :
+     * une commande doit contenir au moins une ligne.
+     *
+     *
+     * @param reservation réservation associée
+     *
+     * @param serveur serveur responsable
+     *
+     * @param article premier article commandé
+     *
+     * @param quantite quantité du premier article
+     *
+     *
+     * @throws IllegalArgumentException si un paramètre est invalide
+     */
+    public Commande(
+            Reservation reservation,
+            Serveur serveur,
+            ArticleMenu article,
+<span class="fc" id="L72">            int quantite) {</span>
+
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if (reservation == null) {</span>
+<span class="nc" id="L75">            throw new IllegalArgumentException(</span>
+                    &quot;La réservation est obligatoire.&quot;
+            );
+        }
+
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        if (serveur == null) {</span>
+<span class="nc" id="L81">            throw new IllegalArgumentException(</span>
+                    &quot;Le serveur est obligatoire.&quot;
+            );
+        }
+
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        if (article == null) {</span>
+<span class="nc" id="L87">            throw new IllegalArgumentException(</span>
+                    &quot;L'article est obligatoire.&quot;
+            );
+        }
+
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        if (quantite &lt;= 0) {</span>
+<span class="nc" id="L93">            throw new IllegalArgumentException(</span>
+                    &quot;La quantité doit être strictement positive.&quot;
+            );
+        }
+
+<span class="fc" id="L98">        this.reservation = reservation;</span>
+<span class="fc" id="L99">        this.serveur = serveur;</span>
+<span class="fc" id="L100">        this.ligneCommandes = new ArrayList&lt;&gt;();</span>
+
+        // Première ligne obligatoire.
+<span class="fc" id="L103">        this.ligneCommandes.add(</span>
+                new LigneCommande(article, quantite)
+        );
+<span class="fc" id="L106">    }</span>
+
+    /**
+     * Retourne la réservation associée.
+     *
+     *
+     * @return réservation
+     */
+    public Reservation getReservation() {
+<span class="fc" id="L115">        return reservation;</span>
+    }
+
+    /**
+     * Retourne le serveur associé.
+     *
+     *
+     * @return serveur
+     */
+    public Serveur getServeur() {
+<span class="fc" id="L125">        return serveur;</span>
+    }
+
+    /**
+     * Retourne les lignes de la commande.
+     *
+     * Une vue non modifiable est retournée afin d'éviter
+     * qu'un code extérieur puisse casser l'encapsulation.
+     *
+     *
+     * @return liste des lignes
+     */
+    public List&lt;LigneCommande&gt; getLigneCommandes() {
+<span class="fc" id="L138">        return Collections.unmodifiableList(ligneCommandes);</span>
+    }
+
+    /**
+     * Ajoute une ligne à la commande.
+     *
+     *
+     * @param article article commandé
+     *
+     * @param quantite quantité
+     *
+     *
+     * @throws IllegalArgumentException si l'article est null
+     *                                  ou si la quantité est invalide
+     */
+    public void ajouterLigne(ArticleMenu article, int quantite) {
+
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">        if (article == null) {</span>
+<span class="nc" id="L156">            throw new IllegalArgumentException(</span>
+                    &quot;L'article est obligatoire.&quot;
+            );
+        }
+
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">        if (quantite &lt;= 0) {</span>
+<span class="nc" id="L162">            throw new IllegalArgumentException(</span>
+                    &quot;La quantité doit être strictement positive.&quot;
+            );
+        }
+
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        if (cloturee) {</span>
+<span class="fc" id="L168">            throw new IllegalStateException(&quot;Une commande clôturée ne peut plus être modifiée.&quot;);</span>
+        }
+<span class="fc" id="L170">        ligneCommandes.add(</span>
+                new LigneCommande(article, quantite)
+        );
+<span class="fc" id="L173">    }</span>
+
+    /**
+     * Calcule le montant total de la commande.
+     *
+     *
+     * @return montant total
+     */
+    public double calculerTotal() {
+
+<span class="fc" id="L183">        double total = 0;</span>
+
+<span class="fc bfc" id="L185" title="All 2 branches covered.">        for (LigneCommande ligne : ligneCommandes) {</span>
+<span class="fc" id="L186">            total += ligne.calculerMontant();</span>
+<span class="fc" id="L187">        }</span>
+
+        // Invariant interne : seules des lignes validées ont été ajoutées.
+        // Une assertion signale ici un défaut du programme, pas une saisie invalide.
+<span class="pc bpc" id="L191" title="1 of 2 branches missed.">        assert !ligneCommandes.isEmpty() : &quot;Une commande doit contenir une ligne.&quot;;</span>
+<span class="fc bfc" id="L192" title="All 2 branches covered.">        return cloturee ? montantFacture : total * (1 - remise);</span>
+    }
+
+    /**
+     * @return vrai si la facture a été figée */
+<span class="fc" id="L197">    public boolean isCloturee() { return cloturee; }</span>
+
+    /**
+     * Fixe la remise avant facturation.
+     *
+     * @param remise taux compris entre zéro et un exclu
+     *
+     * @throws IllegalArgumentException si le taux est invalide
+     *
+     * @throws IllegalStateException si la commande est clôturée
+     */
+    public void setRemise(double remise) {
+<span class="pc bpc" id="L209" title="1 of 6 branches missed.">        if (!Double.isFinite(remise) || remise &lt; 0 || remise &gt;= 1) {</span>
+<span class="fc" id="L210">            throw new IllegalArgumentException(&quot;La remise doit être comprise entre 0 et 1 exclu.&quot;);</span>
+        }
+<span class="fc bfc" id="L212" title="All 2 branches covered.">        if (cloturee) { throw new IllegalStateException(&quot;La commande est déjà clôturée.&quot;); }</span>
+<span class="fc" id="L213">        this.remise = remise;</span>
+<span class="fc" id="L214">    }</span>
+
+    /**
+     * Fige le montant de la facture.
+     * Précondition : commande ouverte et non vide. Postcondition : montant stable.
+     *
+     * @throws IllegalStateException si la commande est déjà clôturée ou vide
+     */
+    public void cloturer() {
+<span class="fc bfc" id="L223" title="All 2 branches covered.">        if (cloturee) { throw new IllegalStateException(&quot;La commande est déjà clôturée.&quot;); }</span>
+<span class="pc bpc" id="L224" title="1 of 2 branches missed.">        if (ligneCommandes.isEmpty()) { throw new IllegalStateException(&quot;Une commande vide ne peut pas être clôturée.&quot;); }</span>
+<span class="fc" id="L225">        montantFacture = calculerTotal();</span>
+<span class="fc" id="L226">        cloturee = true;</span>
+<span class="fc" id="L227">    }</span>
+
+    /**
+     * Classe interne représentant une ligne de commande.
+     *
+     * Cette classe est volontairement imbriquée dans Commande.
+     * Elle est statique pour permettre son instanciation par Hibernate ;
+     * son constructeur métier reste privé et son cycle de vie dépend de Commande.
+     * Une LigneCommande n'a aucun sens sans la Commande
+     * qui la contient.
+     *
+     * Cela représente une relation de composition.
+     */
+    @Embeddable
+    public static class LigneCommande {
+
+        @ManyToOne(optional = false, fetch = FetchType.EAGER)
+        private ArticleMenu articleMenu;
+        @Column(nullable = false)
+        private double prixUnitaireTTC;
+
+        /** Constructeur réservé à Hibernate. */
+<span class="fc" id="L249">        protected LigneCommande() { }</span>
+        @Column(nullable = false)
+        private int quantite;
+
+        /**
+         * Construit une ligne de commande.
+         *
+         * Le constructeur est privé car une ligne doit être
+         * créée uniquement depuis une Commande.
+         *
+         *
+     * @param articleMenu article commandé
+         *
+     * @param quantite quantité
+         */
+        private LigneCommande(
+                ArticleMenu articleMenu,
+<span class="fc" id="L266">                int quantite) {</span>
+
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">            if (articleMenu == null) {</span>
+<span class="nc" id="L269">                throw new IllegalArgumentException(</span>
+                        &quot;L'article est obligatoire.&quot;
+                );
+            }
+
+<span class="pc bpc" id="L274" title="1 of 2 branches missed.">            if (quantite &lt;= 0) {</span>
+<span class="nc" id="L275">                throw new IllegalArgumentException(</span>
+                        &quot;La quantité doit être positive.&quot;
+                );
+            }
+
+<span class="fc" id="L280">            this.articleMenu = articleMenu;</span>
+<span class="fc" id="L281">            this.prixUnitaireTTC = articleMenu.calculerPrixTTC();</span>
+<span class="fc" id="L282">            this.quantite = quantite;</span>
+<span class="fc" id="L283">        }</span>
+
+        /**
+         * Retourne l'article.
+         *
+         *
+     * @return article
+         */
+        public ArticleMenu getArticleMenu() {
+<span class="fc" id="L292">            return articleMenu;</span>
+        }
+
+        /**
+         * Retourne la quantité.
+         *
+         *
+     * @return quantité
+         */
+        public int getQuantite() {
+<span class="fc" id="L302">            return quantite;</span>
+        }
+
+        /**
+         * Calcule le montant de cette ligne.
+         *
+         *
+     * @return prix unitaire multiplié par la quantité
+         */
+        public double calculerMontant() {
+<span class="fc" id="L312">            return prixUnitaireTTC * quantite;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

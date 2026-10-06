@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReservationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.service</a> &gt; <span class="el_source">ReservationService.java</span></div><h1>ReservationService.java</h1><pre class="source lang-java linenums">package restoconnect.service;
+import restoconnect.modele.*;
+import restoconnect.exceptions.TableIndisponibleException;
+import java.time.*;
+import java.util.*;
+import java.util.logging.*;
+/** Gestion des créneaux de deux heures, avec une horloge injectable pour les tests. */
+public class ReservationService {
+<span class="fc" id="L9">    private static final Logger JOURNAL = Logger.getLogger(ReservationService.class.getName());</span>
+    private final Clock horloge;
+<span class="fc" id="L11">    private final List&lt;Reservation&gt; reservations = new ArrayList&lt;&gt;();</span>
+    /** Utilise l'heure locale du système. */
+<span class="fc" id="L13">    public ReservationService() { this(Clock.systemDefaultZone()); }</span>
+    /**
+     * @param horloge horloge obligatoire */
+<span class="fc" id="L16">    public ReservationService(Clock horloge) { this.horloge = Validation.requis(horloge, &quot;Horloge&quot;); }</span>
+    /**
+     * @param reservations réservations déjà sauvegardées */
+    public synchronized void charger(List&lt;Reservation&gt; reservations) {
+<span class="fc" id="L20">        Validation.requis(reservations, &quot;Réservations&quot;);</span>
+<span class="fc" id="L21">        reservations.forEach(r -&gt; Validation.requis(r, &quot;Réservation&quot;));</span>
+<span class="fc" id="L22">        this.reservations.clear();</span>
+<span class="fc" id="L23">        this.reservations.addAll(reservations);</span>
+<span class="fc" id="L24">    }</span>
+    /**
+     * Préconditions : date future, client et table non nuls, effectif adapté à la capacité.
+     * Postcondition : réservation enregistrée en mémoire si le créneau est libre.
+     *
+     * @param date date de début
+     * @param personnes nombre de convives
+     * @param client client
+     * @param table table
+     *
+     * @return réservation créée
+     *
+     * @throws TableIndisponibleException si le créneau chevauche une réservation
+     */
+    public synchronized Reservation reserverTable(LocalDateTime date, int personnes, Client client, Table table)
+            throws TableIndisponibleException {
+<span class="fc" id="L40">        validerDemande(date, personnes, client, table);</span>
+        try {
+<span class="fc bfc" id="L42" title="All 2 branches covered.">            if (!estDisponible(table, date, personnes)) {</span>
+<span class="fc" id="L43">                throw new TableIndisponibleException(&quot;La table &quot; + table.getNumero() + &quot; est déjà réservée sur ce créneau.&quot;);</span>
+            }
+<span class="fc" id="L45">            Reservation reservation = new Reservation(date, personnes, client, table);</span>
+<span class="fc" id="L46">            reservations.add(reservation);</span>
+<span class="fc" id="L47">            return reservation;</span>
+<span class="fc" id="L48">        } catch (TableIndisponibleException erreur) {</span>
+<span class="fc" id="L49">            JOURNAL.log(Level.WARNING, erreur.getMessage(), erreur);</span>
+<span class="fc" id="L50">            throw erreur;</span>
+        } finally {
+<span class="fc" id="L52">            JOURNAL.info(&quot;Demande de réservation traitée pour la table &quot; + table.getNumero() + &quot;.&quot;);</span>
+        }
+    }
+    /**
+     * @param date date future
+     * @param personnes effectif
+     * @param client client
+     * @param table table */
+    public void validerDemande(LocalDateTime date, int personnes, Client client, Table table) {
+<span class="fc" id="L61">        Validation.requis(date, &quot;Date&quot;);</span>
+<span class="fc" id="L62">        Validation.positif(personnes);</span>
+<span class="fc" id="L63">        Validation.requis(client, &quot;Client&quot;);</span>
+<span class="fc" id="L64">        Validation.requis(table, &quot;Table&quot;);</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        if (date.isBefore(LocalDateTime.now(horloge))) { throw new IllegalArgumentException(&quot;La réservation ne peut pas être dans le passé.&quot;); }</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">        if (personnes &gt; table.getCapacite()) { throw new IllegalArgumentException(&quot;Le nombre de personnes dépasse la capacité de la table.&quot;); }</span>
+<span class="fc" id="L67">    }</span>
+    /**
+     * @param table table requise
+     * @param date début futur
+     * @param personnes effectif positif
+     * @return disponibilité */
+    public synchronized boolean estDisponible(Table table, LocalDateTime date, int personnes) {
+<span class="fc" id="L74">        Validation.requis(table, &quot;Table&quot;);</span>
+<span class="fc" id="L75">        Validation.requis(date, &quot;Date&quot;);</span>
+<span class="fc" id="L76">        Validation.positif(personnes);</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        if (date.isBefore(LocalDateTime.now(horloge))) { throw new IllegalArgumentException(&quot;La date est passée.&quot;); }</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        if (personnes &gt; table.getCapacite()) { return false; }</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        return reservations.stream().noneMatch(r -&gt; r.getTable().getNumero() == table.getNumero()</span>
+<span class="pc bpc" id="L80" title="1 of 4 branches missed.">                &amp;&amp; date.isBefore(r.getFin()) &amp;&amp; r.getDateHeure().isBefore(date.plusHours(2)));</span>
+    }
+    /**
+     * @param tables tables candidates
+     * @param date début
+     * @param personnes effectif
+     * @return tables libres */
+    public List&lt;Table&gt; rechercherTables(List&lt;Table&gt; tables, LocalDateTime date, int personnes) {
+<span class="fc" id="L88">        Validation.requis(tables, &quot;Tables&quot;);</span>
+<span class="fc" id="L89">        Validation.requis(date, &quot;Date&quot;);</span>
+<span class="fc" id="L90">        Validation.positif(personnes);</span>
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">        if (date.isBefore(LocalDateTime.now(horloge))) { throw new IllegalArgumentException(&quot;La date est passée.&quot;); }</span>
+<span class="fc" id="L92">        tables.forEach(t -&gt; Validation.requis(t, &quot;Table&quot;));</span>
+<span class="fc" id="L93">        return tables.stream().filter(t -&gt; estDisponible(t, date, personnes)).toList();</span>
+    }
+    /**
+     * @return copie non modifiable des réservations */
+<span class="fc" id="L97">    public synchronized List&lt;Reservation&gt; lister() { return List.copyOf(reservations); }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

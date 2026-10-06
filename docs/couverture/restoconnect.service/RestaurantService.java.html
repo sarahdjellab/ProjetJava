@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RestaurantService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.service</a> &gt; <span class="el_source">RestaurantService.java</span></div><h1>RestaurantService.java</h1><pre class="source lang-java linenums">package restoconnect.service;
+import restoconnect.modele.*;
+import restoconnect.exceptions.*;
+import restoconnect.persistance.*;
+import org.hibernate.SessionFactory;
+import java.time.*;
+import java.util.*;
+/** Façade métier de l'interface : validation, disponibilité, commandes et persistance. */
+public class RestaurantService implements AutoCloseable {
+    private final SessionFactory fabrique;
+    private final ClientDao clients;
+    private final ServeurDao serveurs;
+    private final TableDao tables;
+    private final ArticleMenuDao articles;
+    private final CommandeDao commandes;
+    private final ReservationDao reservations;
+<span class="fc" id="L17">    private final CommandeService commandeService = new CommandeService();</span>
+<span class="fc" id="L18">    private final ReservationService reservationService = new ReservationService();</span>
+    /** Ouvre la base locale et charge un petit jeu de démonstration si elle est vide. */
+<span class="nc" id="L20">    public RestaurantService() { this(HibernateUtil.ouvrir()); }</span>
+    /**
+     * @param fabrique fabrique ouverte, dont ce service prend en charge la fermeture */
+<span class="fc" id="L23">    public RestaurantService(SessionFactory fabrique) {</span>
+<span class="fc" id="L24">        this.fabrique = Validation.requis(fabrique, &quot;Fabrique&quot;);</span>
+<span class="fc" id="L25">        clients = new ClientDao(fabrique); serveurs = new ServeurDao(fabrique); tables = new TableDao(fabrique);</span>
+<span class="fc" id="L26">        articles = new ArticleMenuDao(fabrique); commandes = new CommandeDao(fabrique); reservations = new ReservationDao(fabrique);</span>
+<span class="fc bfc" id="L27" title="All 2 branches covered.">        if (tables.findAll().isEmpty()) { tables.create(new Table(1, 2)); tables.create(new Table(2, 4)); tables.create(new Table(3, 6)); tables.create(new Table(4, 12)); }</span>
+<span class="fc bfc" id="L28" title="All 2 branches covered.">        if (clients.findAll().isEmpty()) { clients.create(new Client(&quot;Camille Dupont&quot;, &quot;0600000000&quot;, &quot;camille@example.fr&quot;)); }</span>
+<span class="fc bfc" id="L29" title="All 2 branches covered.">        if (serveurs.findAll().isEmpty()) { serveurs.create(new Serveur(&quot;Alice&quot;, &quot;S001&quot;)); }</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        if (articles.findAll().isEmpty()) { articles.create(new Entree(&quot;Salade de saison&quot;, 8)); articles.create(new PlatPrincipal(&quot;Poulet rôti&quot;, 16)); articles.create(new Dessert(&quot;Tarte aux pommes&quot;, 7)); }</span>
+<span class="fc" id="L31">    }</span>
+    /**
+     * @return clients enregistrés */
+<span class="fc" id="L34">    public List&lt;Client&gt; listerClients() { return clients.findAll(); }</span>
+    /**
+     * @return serveurs enregistrés */
+<span class="fc" id="L37">    public List&lt;Serveur&gt; listerServeurs() { return serveurs.findAll(); }</span>
+    /**
+     * @return articles du menu */
+<span class="fc" id="L40">    public List&lt;ArticleMenu&gt; listerArticles() { return articles.findAll(); }</span>
+    /**
+     * @return commandes, y compris les factures des sessions précédentes */
+<span class="fc" id="L43">    public List&lt;Commande&gt; listerCommandes() { return commandes.findAll(); }</span>
+    /**
+     * @param nom nom
+     * @param telephone téléphone
+     * @param email courriel
+     * @return nouveau client persisté */
+<span class="fc" id="L49">    public Client creerClient(String nom, String telephone, String email) { return clients.create(new Client(nom, telephone, email)); }</span>
+    /**
+     * @param date date choisie
+     * @param heure HH:mm
+     * @param effectif entier positif
+     * @return tables libres */
+    public List&lt;Table&gt; rechercherTables(LocalDate date, String heure, String effectif) {
+<span class="fc" id="L56">        LocalDateTime debut = Validation.dateHeure(date, heure);</span>
+<span class="fc" id="L57">        int personnes = Validation.entier(effectif);</span>
+<span class="fc" id="L58">        reservationService.charger(reservations.findAll());</span>
+<span class="fc" id="L59">        return reservationService.rechercherTables(tables.findAll(), debut, personnes);</span>
+    }
+    /**
+     * @param date date
+     * @param heure HH:mm
+     * @param effectif entier positif
+     * @param client client
+     * @param table table
+     * @return début validé */
+    public LocalDateTime preparerReservation(LocalDate date, String heure, String effectif, Client client, Table table) {
+<span class="fc" id="L69">        LocalDateTime debut = Validation.dateHeure(date, heure);</span>
+<span class="fc" id="L70">        reservationService.validerDemande(debut, Validation.entier(effectif), client, table);</span>
+<span class="fc" id="L71">        return debut;</span>
+    }
+    /**
+     * @param debut début
+     * @param effectif convives
+     * @param client client
+     * @param table table
+     * @param serveur serveur
+     * @param article article
+     * @param quantite quantité saisie
+     * @return commande sauvegardée
+     * @throws TableIndisponibleException si conflit */
+    public Commande reserverEtCommander(LocalDateTime debut, int effectif, Client client, Table table, Serveur serveur, ArticleMenu article, String quantite)
+            throws TableIndisponibleException {
+<span class="fc" id="L85">        Validation.requis(debut, &quot;Début&quot;); Validation.positif(effectif); Validation.requis(client, &quot;Client&quot;); Validation.requis(table, &quot;Table&quot;);</span>
+<span class="fc" id="L86">        Validation.requis(serveur, &quot;Serveur&quot;); Validation.requis(article, &quot;Article&quot;); int nombre = Validation.entier(quantite);</span>
+<span class="fc" id="L87">        return new TransactionService(fabrique).reserverEtCommander(debut, effectif, client, table, serveur, article, nombre);</span>
+    }
+    /**
+     * @param commande commande
+     * @param article article
+     * @param quantite quantité
+     * @return commande sauvegardée */
+    public Commande ajouterLigne(Commande commande, ArticleMenu article, String quantite) {
+<span class="fc" id="L95">        Validation.requis(commande, &quot;Commande&quot;); Validation.requis(article, &quot;Article&quot;); int nombre = Validation.entier(quantite);</span>
+<span class="fc" id="L96">        Commande copie = retrouver(commande);</span>
+<span class="fc" id="L97">        commandeService.ajouterArticle(copie, article, nombre);</span>
+<span class="fc" id="L98">        return commandes.update(copie);</span>
+    }
+    /**
+     * @param commande commande ouverte
+     * @return commande clôturée et sauvegardée */
+    public Commande facturer(Commande commande) {
+<span class="fc" id="L104">        Validation.requis(commande, &quot;Commande&quot;);</span>
+<span class="fc" id="L105">        Commande copie = retrouver(commande);</span>
+<span class="fc" id="L106">        commandeService.appliquerRemiseGroupe(copie, copie.getReservation().getNombrePersonnes());</span>
+<span class="fc" id="L107">        commandeService.cloturerCommande(copie);</span>
+<span class="fc" id="L108">        return commandes.update(copie);</span>
+    }
+    /**
+     * @param commande commande
+     * @return total TTC formaté en euros */
+<span class="fc" id="L113">    public String montant(Commande commande) { return String.format(Locale.FRANCE, &quot;%.2f €&quot;, commandeService.calculerMontantCommande(commande)); }</span>
+    private Commande retrouver(Commande commande) {
+<span class="pc" id="L115">        long id = commande.getId().orElseThrow(() -&gt; new IllegalArgumentException(&quot;Commande non sauvegardée.&quot;));</span>
+<span class="pc" id="L116">        return commandes.findById(id).orElseThrow(() -&gt; new IllegalArgumentException(&quot;Commande introuvable.&quot;));</span>
+    }
+    /** Ferme les connexions à la base. */
+<span class="fc" id="L119">    @Override public void close() { fabrique.close(); }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

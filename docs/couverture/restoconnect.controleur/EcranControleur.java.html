@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EcranControleur.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.controleur</a> &gt; <span class="el_source">EcranControleur.java</span></div><h1>EcranControleur.java</h1><pre class="source lang-java linenums">package restoconnect.controleur;
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.scene.layout.Pane;
+import javafx.collections.FXCollections;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.util.StringConverter;
+import restoconnect.modele.*;
+import restoconnect.vue.Navigation;
+import restoconnect.service.Validation;
+import restoconnect.exceptions.*;
+import java.time.*;
+import java.util.logging.*;
+/** Contrôleur de présentation ; les règles de validation et les opérations sont déléguées au service. */
+public class EcranControleur {
+<span class="nc" id="L16">    private static final Logger JOURNAL = Logger.getLogger(EcranControleur.class.getName());</span>
+    private final Navigation navigation;
+    @FXML private DatePicker date;
+    @FXML private TextField heure, personnes, quantite, nomClient, telephoneClient, emailClient;
+    @FXML private ComboBox&lt;Client&gt; clients;
+    @FXML private ComboBox&lt;Serveur&gt; serveurs;
+    @FXML private ComboBox&lt;ArticleMenu&gt; articles;
+    @FXML private ComboBox&lt;Commande&gt; historique;
+    @FXML private TableView&lt;Table&gt; tables;
+    @FXML private TableColumn&lt;Table, String&gt; numero, capacite;
+    @FXML private TableView&lt;Commande.LigneCommande&gt; lignes;
+    @FXML private TableColumn&lt;Commande.LigneCommande, String&gt; designation, nombre, montantLigne;
+    @FXML private Label total, informations, erreur;
+    @FXML private Pane formulaire;
+    /**
+     * @param navigation contexte partagé entre les vues */
+<span class="nc" id="L32">    public EcranControleur(Navigation navigation) { this.navigation = navigation; }</span>
+    /** Initialise uniquement les composants présents dans la vue chargée. */
+    @FXML public void initialize() {
+<span class="nc bnc" id="L35" title="All 2 branches missed.">        if (date != null) {</span>
+<span class="nc" id="L36">            date.setValue(LocalDate.now().plusDays(1)); heure.setText(&quot;19:30&quot;); personnes.setText(&quot;2&quot;);</span>
+<span class="nc" id="L37">            numero.setCellValueFactory(c -&gt; new SimpleStringProperty(Integer.toString(c.getValue().getNumero())));</span>
+<span class="nc" id="L38">            capacite.setCellValueFactory(c -&gt; new SimpleStringProperty(Integer.toString(c.getValue().getCapacite())));</span>
+<span class="nc" id="L39">            clients.setItems(FXCollections.observableArrayList(navigation.getService().listerClients()));</span>
+<span class="nc" id="L40">            convertir(clients, Client::getNom); clients.getSelectionModel().selectFirst();</span>
+        }
+<span class="nc bnc" id="L42" title="All 2 branches missed.">        if (articles != null) {</span>
+<span class="nc" id="L43">            articles.setItems(FXCollections.observableArrayList(navigation.getService().listerArticles()));</span>
+<span class="nc" id="L44">            convertir(articles, ArticleMenu::getNom); articles.getSelectionModel().selectFirst();</span>
+<span class="nc" id="L45">            serveurs.setItems(FXCollections.observableArrayList(navigation.getService().listerServeurs()));</span>
+<span class="nc" id="L46">            convertir(serveurs, Serveur::getNom); serveurs.getSelectionModel().selectFirst(); quantite.setText(&quot;1&quot;);</span>
+        }
+<span class="nc bnc" id="L48" title="All 2 branches missed.">        if (lignes != null) {</span>
+<span class="nc" id="L49">            designation.setCellValueFactory(c -&gt; new SimpleStringProperty(c.getValue().getArticleMenu().getNom()));</span>
+<span class="nc" id="L50">            nombre.setCellValueFactory(c -&gt; new SimpleStringProperty(Integer.toString(c.getValue().getQuantite())));</span>
+<span class="nc" id="L51">            montantLigne.setCellValueFactory(c -&gt; new SimpleStringProperty(String.format(java.util.Locale.FRANCE, &quot;%.2f €&quot;, c.getValue().calculerMontant())));</span>
+<span class="nc" id="L52">            actualiserCommande();</span>
+        }
+<span class="nc bnc" id="L54" title="All 2 branches missed.">        if (historique != null) {</span>
+<span class="nc" id="L55">            historique.setItems(FXCollections.observableArrayList(navigation.getService().listerCommandes()));</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">            convertir(historique, c -&gt; &quot;Commande &quot; + c.getId().orElseThrow() + &quot; — &quot; + c.getReservation().getClient().getNom() + (c.isCloturee() ? &quot; — facturée&quot; : &quot; — ouverte&quot;));</span>
+        }
+<span class="nc" id="L58">    }</span>
+    private &lt;T&gt; void convertir(ComboBox&lt;T&gt; boite, java.util.function.Function&lt;T, String&gt; texte) {
+<span class="nc" id="L60">        boite.setConverter(new StringConverter&lt;&gt;() {</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">            @Override public String toString(T objet) { return objet == null ? &quot;&quot; : texte.apply(objet); }</span>
+<span class="nc" id="L62">            @Override public T fromString(String texte) { throw new UnsupportedOperationException(&quot;Liste non éditable.&quot;); }</span>
+        });
+<span class="nc" id="L64">    }</span>
+    /** Affiche le plan de salle. */
+<span class="nc" id="L66">    @FXML public void ouvrirPlan() { executer(() -&gt; navigation.afficher(&quot;plan&quot;)); }</span>
+    /** Affiche l'accueil. */
+<span class="nc" id="L68">    @FXML public void ouvrirAccueil() { executer(() -&gt; navigation.afficher(&quot;accueil&quot;)); }</span>
+    /** Recherche les disponibilités à partir des champs du formulaire. */
+    @FXML public void rechercher() {
+<span class="nc" id="L71">        executer(() -&gt; tables.setItems(FXCollections.observableArrayList(navigation.getService().rechercherTables(date.getValue(), heure.getText(), personnes.getText()))));</span>
+<span class="nc" id="L72">    }</span>
+    /** Prépare la demande ; elle sera sauvegardée avec sa première ligne de commande. */
+    @FXML public void reserver() {
+<span class="nc" id="L75">        executer(() -&gt; {</span>
+<span class="nc" id="L76">            Table table = tables.getSelectionModel().getSelectedItem();</span>
+<span class="nc" id="L77">            LocalDateTime debut = navigation.getService().preparerReservation(date.getValue(), heure.getText(), personnes.getText(), clients.getValue(), table);</span>
+<span class="nc" id="L78">            navigation.preparer(debut, Validation.entier(personnes.getText()), clients.getValue(), table);</span>
+<span class="nc" id="L79">            navigation.afficher(&quot;commande&quot;);</span>
+<span class="nc" id="L80">        });</span>
+<span class="nc" id="L81">    }</span>
+    /** Enregistre un nouveau client par la couche métier. */
+    @FXML public void creerClient() {
+<span class="nc" id="L84">        executer(() -&gt; {</span>
+<span class="nc" id="L85">            Client client = navigation.getService().creerClient(nomClient.getText(), telephoneClient.getText(), emailClient.getText());</span>
+<span class="nc" id="L86">            clients.getItems().add(client); clients.setValue(client);</span>
+<span class="nc" id="L87">            nomClient.clear(); telephoneClient.clear(); emailClient.clear();</span>
+<span class="nc" id="L88">        });</span>
+<span class="nc" id="L89">    }</span>
+    /** Ajoute une ligne ; la première déclenche la transaction réservation et commande. */
+    @FXML public void ajouter() {
+<span class="nc" id="L92">        executer(() -&gt; {</span>
+            Commande commande;
+<span class="nc bnc" id="L94" title="All 2 branches missed.">            if (navigation.getCommande().isPresent()) {</span>
+<span class="nc" id="L95">                commande = navigation.getService().ajouterLigne(navigation.getCommande().orElseThrow(), articles.getValue(), quantite.getText());</span>
+            } else {
+<span class="nc" id="L97">                commande = navigation.getService().reserverEtCommander(navigation.getDebut(), navigation.getPersonnes(), navigation.getClient(), navigation.getTable(), serveurs.getValue(), articles.getValue(), quantite.getText());</span>
+            }
+<span class="nc" id="L99">            navigation.setCommande(commande); serveurs.setDisable(true); actualiserCommande();</span>
+<span class="nc" id="L100">        });</span>
+<span class="nc" id="L101">    }</span>
+    /** Clôture et sauvegarde la commande, puis affiche la facture. */
+    @FXML public void facturer() {
+<span class="nc" id="L104">        executer(() -&gt; {</span>
+<span class="nc" id="L105">            Commande commande = navigation.getCommande().orElseThrow(() -&gt; new IllegalArgumentException(&quot;Ajoutez au moins une ligne avant de facturer.&quot;));</span>
+<span class="nc" id="L106">            navigation.setCommande(navigation.getService().facturer(commande)); navigation.afficher(&quot;facture&quot;);</span>
+<span class="nc" id="L107">        });</span>
+<span class="nc" id="L108">    }</span>
+    /** Ouvre une commande sauvegardée pour consulter sa facture ou reprendre la saisie. */
+    @FXML public void reprendre() {
+<span class="nc" id="L111">        executer(() -&gt; {</span>
+<span class="nc" id="L112">            Commande commande = Validation.requis(historique.getValue(), &quot;Commande&quot;);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">            navigation.setCommande(commande); navigation.afficher(commande.isCloturee() ? &quot;facture&quot; : &quot;commande&quot;);</span>
+<span class="nc" id="L114">        });</span>
+<span class="nc" id="L115">    }</span>
+    private void actualiserCommande() {
+<span class="nc" id="L117">        navigation.getCommande().ifPresent(c -&gt; {</span>
+<span class="nc" id="L118">            lignes.setItems(FXCollections.observableArrayList(c.getLigneCommandes()));</span>
+<span class="nc" id="L119">            total.setText(&quot;Total TTC : &quot; + navigation.getService().montant(c));</span>
+<span class="nc" id="L120">            informations.setText(&quot;Table &quot; + c.getReservation().getTable().getNumero() + &quot; • &quot; + c.getReservation().getClient().getNom() + &quot; • &quot; + c.getReservation().getNombrePersonnes() + &quot; convives&quot;);</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">            if (serveurs != null) { serveurs.setValue(c.getServeur()); serveurs.setDisable(true); }</span>
+<span class="nc" id="L122">        });</span>
+<span class="nc" id="L123">    }</span>
+    private void executer(Action action) {
+        try {
+<span class="nc bnc" id="L126" title="All 2 branches missed.">            if (erreur != null) { erreur.setText(&quot;&quot;); }</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">            if (formulaire != null) { formulaire.getStyleClass().remove(&quot;invalide&quot;); }</span>
+<span class="nc" id="L128">            action.effectuer();</span>
+<span class="nc" id="L129">        } catch (TableIndisponibleException | ClientIntrouvableException probleme) {</span>
+<span class="nc" id="L130">            JOURNAL.log(Level.WARNING, probleme.getMessage(), probleme); alerter(Alert.AlertType.WARNING, &quot;Demande refusée&quot;, probleme.getMessage());</span>
+<span class="nc" id="L131">        } catch (IllegalArgumentException | IllegalStateException | java.time.DateTimeException probleme) {</span>
+<span class="nc" id="L132">            JOURNAL.log(Level.WARNING, &quot;Formulaire invalide.&quot;, probleme);</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">            if (erreur != null) { erreur.setText(probleme.getMessage()); }</span>
+<span class="nc bnc" id="L134" title="All 4 branches missed.">            if (formulaire != null &amp;&amp; !formulaire.getStyleClass().contains(&quot;invalide&quot;)) { formulaire.getStyleClass().add(&quot;invalide&quot;); }</span>
+<span class="nc" id="L135">        } catch (Exception probleme) {</span>
+<span class="nc" id="L136">            JOURNAL.log(Level.SEVERE, &quot;Opération impossible.&quot;, probleme);</span>
+<span class="nc" id="L137">            alerter(Alert.AlertType.ERROR, &quot;Opération impossible&quot;, &quot;L'opération a échoué. Vos données enregistrées sont conservées. Consultez le journal pour le diagnostic.&quot;);</span>
+<span class="nc" id="L138">        }</span>
+<span class="nc" id="L139">    }</span>
+    private void alerter(Alert.AlertType type, String titre, String message) {
+<span class="nc" id="L141">        Alert alerte = new Alert(type); alerte.initOwner(navigation.getFenetre()); alerte.setTitle(titre); alerte.setHeaderText(titre); alerte.setContentText(message); alerte.showAndWait();</span>
+<span class="nc" id="L142">    }</span>
+    @FunctionalInterface private interface Action { void effectuer() throws Exception; }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

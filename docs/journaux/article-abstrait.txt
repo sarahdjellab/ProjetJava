@@ -1,0 +1,4 @@
+work/abstract-check/InstantiationInterdite.java:3: error: ArticleMenu is abstract; cannot be instantiated
+    ArticleMenu article = new ArticleMenu("Interdit", 10);
+                          ^
+1 error

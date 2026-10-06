@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ArticleMenu.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.modele</a> &gt; <span class="el_source">ArticleMenu.java</span></div><h1>ArticleMenu.java</h1><pre class="source lang-java linenums">package restoconnect.modele;
+
+import jakarta.persistence.*;
+
+/**
+ * Représente un article disponible dans le menu du restaurant.
+ */
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = &quot;categorie&quot;)
+public abstract class ArticleMenu {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /** Constructeur réservé à Hibernate. */
+<span class="fc" id="L18">    protected ArticleMenu() { }</span>
+
+    /**
+     * @return identifiant technique, vide avant la première sauvegarde */
+    public java.util.Optional&lt;Long&gt; getId() {
+<span class="fc" id="L23">        return java.util.Optional.ofNullable(id);</span>
+    }
+
+
+    @Column(nullable = false)
+    private String nom;
+    @Column(nullable = false)
+    private double prixBase;
+
+    /**
+     * Construit un article avec son nom et son prix.
+     *
+     *
+     * @param nom nom de l'article
+     *
+     * @param prixBase prix de base
+     *
+     *
+     * @throws IllegalArgumentException si le nom est vide
+     *                                  ou si le prix n'est pas positif
+     */
+<span class="fc" id="L44">    public ArticleMenu(String nom, double prixBase) {</span>
+
+<span class="pc bpc" id="L46" title="1 of 4 branches missed.">        if (nom == null || nom.isBlank()) {</span>
+<span class="fc" id="L47">            throw new IllegalArgumentException(</span>
+                    &quot;Le nom de l'article ne peut pas être vide.&quot;
+            );
+        }
+
+<span class="fc bfc" id="L52" title="All 4 branches covered.">        if (!Double.isFinite(prixBase) || prixBase &lt;= 0) {</span>
+<span class="fc" id="L53">            throw new IllegalArgumentException(</span>
+                    &quot;Le prix doit être strictement positif.&quot;
+            );
+        }
+
+<span class="fc" id="L58">        this.nom = nom;</span>
+<span class="fc" id="L59">        this.prixBase = prixBase;</span>
+<span class="fc" id="L60">    }</span>
+
+    /**
+     * Constructeur surchargé.
+     *
+     * Un prix par défaut de 10 euros est utilisé.
+     *
+     *
+     * @param nom nom de l'article
+     */
+    public ArticleMenu(String nom) {
+<span class="nc" id="L71">        this(nom, 10.0);</span>
+<span class="nc" id="L72">    }</span>
+
+    /**
+     * Retourne le nom.
+     *
+     *
+     * @return nom
+     */
+    public String getNom() {
+<span class="fc" id="L81">        return nom;</span>
+    }
+
+    /**
+     * Modifie le nom.
+     *
+     *
+     * @param nom nouveau nom
+     */
+    public void setNom(String nom) {
+
+<span class="pc bpc" id="L92" title="1 of 4 branches missed.">        if (nom == null || nom.isBlank()) {</span>
+<span class="fc" id="L93">            throw new IllegalArgumentException(</span>
+                    &quot;Le nom ne peut pas être vide.&quot;
+            );
+        }
+
+<span class="fc" id="L98">        this.nom = nom;</span>
+<span class="fc" id="L99">    }</span>
+
+    /**
+     * Retourne le prix de base.
+     *
+     *
+     * @return prix
+     */
+    public double getPrixBase() {
+<span class="fc" id="L108">        return prixBase;</span>
+    }
+
+    /**
+     * Modifie le prix de base.
+     *
+     *
+     * @param prixBase nouveau prix
+     */
+    public void setPrixBase(double prixBase) {
+
+<span class="pc bpc" id="L119" title="1 of 4 branches missed.">        if (!Double.isFinite(prixBase) || prixBase &lt;= 0) {</span>
+<span class="fc" id="L120">            throw new IllegalArgumentException(</span>
+                    &quot;Le prix doit être strictement positif.&quot;
+            );
+        }
+
+<span class="fc" id="L125">        this.prixBase = prixBase;</span>
+<span class="fc" id="L126">    }</span>
+
+    /**
+     * @return prix toutes taxes comprises, calculé par la catégorie */
+    public abstract double calculerPrixTTC();
+
+    /**
+     * Retourne une représentation textuelle de l'article.
+     *
+     *
+     * @return informations de l'article
+     */
+    @Override
+    public String toString() {
+<span class="nc" id="L140">        return &quot;ArticleMenu{&quot; +</span>
+                &quot;nom='&quot; + nom + '\'' +
+                &quot;, prixBase=&quot; + prixBase +
+                '}';
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

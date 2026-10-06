@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Dao.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.persistance</a> &gt; <span class="el_source">Dao.java</span></div><h1>Dao.java</h1><pre class="source lang-java linenums">package restoconnect.persistance;
+import org.hibernate.*;
+import restoconnect.service.Validation;
+import restoconnect.exceptions.PersistanceException;
+import java.util.*;
+import java.util.function.Function;
+import java.util.logging.*;
+/** CRUD partagé ; une session courte et une transaction par écriture. */
+public class Dao&lt;T&gt; {
+<span class="fc" id="L10">    private static final Logger JOURNAL = Logger.getLogger(Dao.class.getName());</span>
+    private final SessionFactory fabrique;
+    private final Class&lt;T&gt; type;
+    /**
+     * @param fabrique fabrique ouverte
+     * @param type classe d'entité */
+<span class="fc" id="L16">    public Dao(SessionFactory fabrique, Class&lt;T&gt; type) {</span>
+<span class="fc" id="L17">        this.fabrique = Validation.requis(fabrique, &quot;Fabrique&quot;);</span>
+<span class="fc" id="L18">        this.type = Validation.requis(type, &quot;Type&quot;);</span>
+<span class="fc" id="L19">    }</span>
+    /**
+     * @param entite entité valide
+     * @return entité avec son identifiant */
+    public T create(T entite) {
+<span class="fc" id="L24">        ValidationEntite.verifier(entite);</span>
+<span class="fc" id="L25">        return ecrire(s -&gt; { s.persist(entite); return entite; });</span>
+    }
+    /**
+     * @param id identifiant positif
+     * @return entité ou Optional vide */
+    public Optional&lt;T&gt; findById(long id) {
+<span class="fc bfc" id="L31" title="All 2 branches covered.">        if (id &lt;= 0) { throw new IllegalArgumentException(&quot;Identifiant invalide.&quot;); }</span>
+<span class="fc" id="L32">        return lire(s -&gt; Optional.ofNullable(s.get(type, id)));</span>
+    }
+    /**
+     * @return liste non nulle de toutes les entités */
+<span class="fc" id="L36">    public List&lt;T&gt; findAll() { return lire(s -&gt; s.createQuery(&quot;from &quot; + type.getSimpleName(), type).getResultList()); }</span>
+    /**
+     * @param entite entité valide
+     * @return copie attachée puis sauvegardée */
+    public T update(T entite) {
+<span class="fc" id="L41">        ValidationEntite.verifier(entite);</span>
+<span class="fc" id="L42">        return ecrire(s -&gt; s.merge(entite));</span>
+    }
+    /**
+     * @param id identifiant positif ; absence tolérée */
+    public void delete(long id) {
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">        if (id &lt;= 0) { throw new IllegalArgumentException(&quot;Identifiant invalide.&quot;); }</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        ecrire(s -&gt; { T entite = s.get(type, id); if (entite != null) { s.remove(entite); } return Boolean.TRUE; });</span>
+<span class="fc" id="L49">    }</span>
+    private &lt;R&gt; R lire(Function&lt;Session, R&gt; action) {
+<span class="fc" id="L51">        try (Session session = fabrique.openSession()) { return action.apply(session); }</span>
+<span class="nc" id="L52">        catch (RuntimeException erreur) {</span>
+<span class="nc" id="L53">            JOURNAL.log(Level.SEVERE, &quot;Lecture en base impossible.&quot;, erreur);</span>
+<span class="nc" id="L54">            throw new PersistanceException(&quot;La lecture en base a échoué.&quot;, erreur);</span>
+        }
+    }
+    private &lt;R&gt; R ecrire(Function&lt;Session, R&gt; action) {
+<span class="fc" id="L58">        try (Session session = fabrique.openSession()) {</span>
+<span class="fc" id="L59">            Transaction transaction = session.beginTransaction();</span>
+<span class="fc" id="L60">            try { R resultat = action.apply(session); transaction.commit(); return resultat; }</span>
+<span class="fc" id="L61">            catch (RuntimeException erreur) {</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">                if (transaction.isActive()) { transaction.rollback(); }</span>
+<span class="fc" id="L63">                JOURNAL.log(Level.SEVERE, &quot;Écriture annulée.&quot;, erreur);</span>
+<span class="fc" id="L64">                throw new PersistanceException(&quot;La sauvegarde a échoué ; aucune modification conservée.&quot;, erreur);</span>
+            }
+<span class="fc" id="L66">        } catch (PersistanceException erreur) {</span>
+<span class="fc" id="L67">            JOURNAL.log(Level.SEVERE, erreur.getMessage(), erreur); throw erreur;</span>
+<span class="nc" id="L68">        } catch (RuntimeException erreur) {</span>
+<span class="nc" id="L69">            JOURNAL.log(Level.SEVERE, &quot;Session indisponible.&quot;, erreur);</span>
+<span class="nc" id="L70">            throw new PersistanceException(&quot;La base est indisponible.&quot;, erreur);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,5 @@
+# Copier ce fichier vers database.properties ; ce dernier est exclu du dépôt.
+hibernate.connection.driver_class=org.h2.Driver
+hibernate.connection.url=jdbc:h2:file:./data/restoconnect
+hibernate.hbm2ddl.auto=update
+# Renseigner utilisateur et mot de passe uniquement dans le fichier local.

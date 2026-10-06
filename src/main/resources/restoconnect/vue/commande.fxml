@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="restoconnect.controleur.EcranControleur">
+ <top><HBox spacing="20" styleClass="bandeau"><Label text="RestoConnect" styleClass="marque"/><Label text="Gestion du restaurant" styleClass="sous-titre"/></HBox></top>
+ <center><VBox spacing="18" styleClass="contenu">
+ <Label text="Prise de commande" styleClass="titre"/><Label fx:id="informations" text="La réservation sera confirmée avec le premier article."/>
+ <GridPane fx:id="formulaire" hgap="12" vgap="12"><Label text="Serveur"/><ComboBox fx:id="serveurs" GridPane.columnIndex="1" prefWidth="260"/>
+ <Label text="Article" GridPane.rowIndex="1"/><ComboBox fx:id="articles" GridPane.rowIndex="1" GridPane.columnIndex="1" prefWidth="260"/>
+ <Label text="Quantité" GridPane.rowIndex="1" GridPane.columnIndex="2"/><TextField fx:id="quantite" GridPane.rowIndex="1" GridPane.columnIndex="3" prefWidth="80"/>
+ </GridPane><Button text="Ajouter à la commande" onAction="#ajouter" styleClass="principal"/>
+<TableView fx:id="lignes" prefHeight="280" VBox.vgrow="ALWAYS"><columns><TableColumn fx:id="designation" text="Article" prefWidth="450"/><TableColumn fx:id="nombre" text="Quantité" prefWidth="150"/><TableColumn fx:id="montantLigne" text="Montant TTC" prefWidth="220"/></columns><placeholder><Label text="Ajoutez la première ligne pour confirmer la réservation."/></placeholder></TableView><Label fx:id="total" text="Total TTC : 0,00 €" styleClass="titre-secondaire"/>
+ <Button text="Clôturer et facturer" onAction="#facturer"/><Label fx:id="erreur" styleClass="erreur" wrapText="true"/>
+</VBox></center>
+ <bottom><HBox spacing="12" styleClass="pied"><Button text="Accueil" onAction="#ouvrirAccueil"/><Button text="Plan de salle" onAction="#ouvrirPlan"/><Label text="Réservations de 2 heures • Prix en euros"/></HBox></bottom>
+</BorderPane>

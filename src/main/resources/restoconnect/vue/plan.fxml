@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="restoconnect.controleur.EcranControleur">
+ <top><HBox spacing="20" styleClass="bandeau"><Label text="RestoConnect" styleClass="marque"/><Label text="Gestion du restaurant" styleClass="sous-titre"/></HBox></top>
+ <center><VBox spacing="15" styleClass="contenu">
+ <Label text="Plan de salle et réservation" styleClass="titre"/>
+ <GridPane fx:id="formulaire" hgap="12" vgap="12">
+  <Label text="Date" GridPane.rowIndex="0" GridPane.columnIndex="0"/><DatePicker fx:id="date" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+  <Label text="Heure (HH:mm)" GridPane.rowIndex="0" GridPane.columnIndex="2"/><TextField fx:id="heure" GridPane.rowIndex="0" GridPane.columnIndex="3" prefWidth="100"/>
+  <Label text="Convives" GridPane.rowIndex="1" GridPane.columnIndex="0"/><TextField fx:id="personnes" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+  <Label text="Client" GridPane.rowIndex="1" GridPane.columnIndex="2"/><ComboBox fx:id="clients" GridPane.rowIndex="1" GridPane.columnIndex="3" prefWidth="220"/>
+ </GridPane>
+ <Button text="Rechercher les tables disponibles" onAction="#rechercher" styleClass="principal"/>
+ <TableView fx:id="tables" prefHeight="180" VBox.vgrow="ALWAYS"><columns><TableColumn fx:id="numero" text="Table disponible" prefWidth="300"/><TableColumn fx:id="capacite" text="Capacité" prefWidth="300"/></columns><placeholder><Label text="Lancez une recherche pour afficher les tables libres."/></placeholder></TableView>
+ <Button text="Choisir cette table et préparer la commande" onAction="#reserver"/>
+ <Label text="Nouveau client (facultatif)" styleClass="titre-secondaire"/>
+ <HBox spacing="10"><TextField fx:id="nomClient" promptText="Nom"/><TextField fx:id="telephoneClient" promptText="Téléphone"/><TextField fx:id="emailClient" promptText="Adresse e-mail"/><Button text="Enregistrer" onAction="#creerClient"/></HBox>
+ <Label fx:id="erreur" styleClass="erreur" wrapText="true"/>
+</VBox></center>
+ <bottom><HBox spacing="12" styleClass="pied"><Button text="Accueil" onAction="#ouvrirAccueil"/><Button text="Plan de salle" onAction="#ouvrirPlan"/><Label text="Réservations de 2 heures • Prix en euros"/></HBox></bottom>
+</BorderPane>

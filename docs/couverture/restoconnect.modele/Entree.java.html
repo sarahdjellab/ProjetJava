@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Entree.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.modele</a> &gt; <span class="el_source">Entree.java</span></div><h1>Entree.java</h1><pre class="source lang-java linenums">package restoconnect.modele;
+import jakarta.persistence.*;
+import java.util.*;
+/** Article de catégorie Entree ; coefficient pédagogique de 1.05 (pas un taux fiscal réel). */
+@Entity
+@DiscriminatorValue(&quot;ENTREE&quot;)
+public class Entree extends ArticleMenu implements Personnalisable {
+    /** Constructeur réservé à Hibernate. */
+<span class="fc" id="L9">    protected Entree() { }</span>
+    /**
+     * @param nom nom non vide
+     * @param prixBase prix hors majoration, strictement positif */
+<span class="fc" id="L13">    public Entree(String nom, double prixBase) { super(nom, prixBase); }</span>
+    /**
+     * @param nom nom non vide ; prix par défaut de dix euros */
+<span class="fc" id="L16">    public Entree(String nom) { this(nom, 10.0); }</span>
+<span class="fc" id="L17">    @ElementCollection(fetch = FetchType.EAGER)</span>
+    @CollectionTable(name = &quot;supplements&quot;, joinColumns = @JoinColumn(name = &quot;article_id&quot;))
+    @MapKeyColumn(name = &quot;designation&quot;)
+    @Column(name = &quot;prix&quot;, nullable = false)
+    private Map&lt;String, Double&gt; supplements = new LinkedHashMap&lt;&gt;();
+    /** {@inheritDoc} */
+    @Override
+    public void ajouterSupplement(String designation, double prix) {
+<span class="pc bpc" id="L25" title="3 of 8 branches missed.">        if (designation == null || designation.isBlank() || !Double.isFinite(prix) || prix &lt;= 0) {</span>
+<span class="fc" id="L26">            throw new IllegalArgumentException(&quot;Le supplément doit avoir un nom et un prix positif fini.&quot;);</span>
+        }
+<span class="fc" id="L28">        supplements.put(designation.trim(), prix);</span>
+<span class="fc" id="L29">    }</span>
+    /** {@inheritDoc} */
+    @Override
+<span class="fc" id="L32">    public Map&lt;String, Double&gt; listerSupplements() { return Map.copyOf(supplements); }</span>
+    /** {@inheritDoc} */
+    @Override
+<span class="fc" id="L35">    public double calculerPrixTTC() { return (getPrixBase() + supplements.values().stream().mapToDouble(Double::doubleValue).sum()) * 1.05; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

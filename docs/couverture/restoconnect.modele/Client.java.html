@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Client.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.modele</a> &gt; <span class="el_source">Client.java</span></div><h1>Client.java</h1><pre class="source lang-java linenums">package restoconnect.modele;
+
+import jakarta.persistence.*;
+
+/**
+ * Représente un client du restaurant.
+ *
+ * Un client possède un nom, un numéro de téléphone
+ * et une adresse e-mail.
+ */
+@Entity
+public class Client {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /** Constructeur réservé à Hibernate. */
+<span class="fc" id="L19">    protected Client() { }</span>
+
+    /**
+     * @return identifiant technique, vide avant la première sauvegarde */
+    public java.util.Optional&lt;Long&gt; getId() {
+<span class="fc" id="L24">        return java.util.Optional.ofNullable(id);</span>
+    }
+
+
+    @Column(nullable = false)
+    private String nom;
+    @Column(nullable = false)
+    private String telephone;
+    @Column(nullable = false)
+    private String email;
+
+    /**
+     * Construit un client.
+     *
+     *
+     * @param nom nom du client
+     *
+     * @param telephone numéro de téléphone
+     *
+     * @param email adresse e-mail
+     *
+     *
+     * @throws IllegalArgumentException si le nom est vide
+     *                                  ou si l'e-mail ne contient pas @
+     */
+<span class="fc" id="L49">    public Client(String nom, String telephone, String email) {</span>
+
+<span class="pc bpc" id="L51" title="1 of 4 branches missed.">        if (nom == null || nom.isBlank()) {</span>
+<span class="fc" id="L52">            throw new IllegalArgumentException(</span>
+                    &quot;Le nom du client ne peut pas être vide.&quot;
+            );
+        }
+
+<span class="pc bpc" id="L57" title="1 of 4 branches missed.">        if (email == null || !email.contains(&quot;@&quot;)) {</span>
+<span class="fc" id="L58">            throw new IllegalArgumentException(</span>
+                    &quot;L'adresse e-mail doit contenir un @.&quot;
+            );
+        }
+
+<span class="fc" id="L63">        this.nom = nom;</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">        this.telephone = telephone == null ? &quot;&quot; : telephone;</span>
+<span class="fc" id="L65">        this.email = email;</span>
+<span class="fc" id="L66">    }</span>
+
+    /**
+     * Retourne le nom du client.
+     *
+     *
+     * @return nom du client
+     */
+    public String getNom() {
+<span class="fc" id="L75">        return nom;</span>
+    }
+
+    /**
+     * Modifie le nom du client.
+     *
+     *
+     * @param nom nouveau nom
+     */
+    public void setNom(String nom) {
+
+<span class="pc bpc" id="L86" title="1 of 4 branches missed.">        if (nom == null || nom.isBlank()) {</span>
+<span class="fc" id="L87">            throw new IllegalArgumentException(</span>
+                    &quot;Le nom du client ne peut pas être vide.&quot;
+            );
+        }
+
+<span class="fc" id="L92">        this.nom = nom;</span>
+<span class="fc" id="L93">    }</span>
+
+    /**
+     * Retourne le téléphone du client.
+     *
+     *
+     * @return téléphone
+     */
+    public String getTelephone() {
+<span class="fc" id="L102">        return telephone;</span>
+    }
+
+    /**
+     * Modifie le téléphone du client.
+     *
+     *
+     * @param telephone nouveau téléphone
+     */
+    public void setTelephone(String telephone) {
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        this.telephone = telephone == null ? &quot;&quot; : telephone;</span>
+<span class="fc" id="L113">    }</span>
+
+    /**
+     * Retourne l'e-mail du client.
+     *
+     *
+     * @return adresse e-mail
+     */
+    public String getEmail() {
+<span class="fc" id="L122">        return email;</span>
+    }
+
+    /**
+     * Modifie l'e-mail du client.
+     *
+     *
+     * @param email nouvel e-mail
+     */
+    public void setEmail(String email) {
+
+<span class="pc bpc" id="L133" title="1 of 4 branches missed.">        if (email == null || !email.contains(&quot;@&quot;)) {</span>
+<span class="fc" id="L134">            throw new IllegalArgumentException(</span>
+                    &quot;L'adresse e-mail doit contenir un @.&quot;
+            );
+        }
+
+<span class="fc" id="L139">        this.email = email;</span>
+<span class="fc" id="L140">    }</span>
+
+    /**
+     * Retourne une représentation textuelle du client.
+     *
+     *
+     * @return informations principales du client
+     */
+    @Override
+    public String toString() {
+<span class="nc" id="L150">        return &quot;Client{&quot; +</span>
+                &quot;nom='&quot; + nom + '\'' +
+                &quot;, telephone='&quot; + telephone + '\'' +
+                &quot;, email='&quot; + email + '\'' +
+                '}';
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="restoconnect.controleur.EcranControleur">
+ <top><HBox spacing="20" styleClass="bandeau"><Label text="RestoConnect" styleClass="marque"/><Label text="Gestion du restaurant" styleClass="sous-titre"/></HBox></top>
+ <center><VBox spacing="20" styleClass="contenu"><Label text="Facture" styleClass="titre"/><Label fx:id="informations"/>
+<TableView fx:id="lignes" prefHeight="280" VBox.vgrow="ALWAYS"><columns><TableColumn fx:id="designation" text="Article" prefWidth="450"/><TableColumn fx:id="nombre" text="Quantité" prefWidth="150"/><TableColumn fx:id="montantLigne" text="Montant TTC" prefWidth="220"/></columns><placeholder><Label text="Ajoutez la première ligne pour confirmer la réservation."/></placeholder></TableView><Label fx:id="total" styleClass="titre"/><Label text="Une remise de 10 % est incluse à partir de 10 convives. La facture est désormais définitive." wrapText="true"/><Label fx:id="erreur" styleClass="erreur"/></VBox></center>
+ <bottom><HBox spacing="12" styleClass="pied"><Button text="Accueil" onAction="#ouvrirAccueil"/><Button text="Plan de salle" onAction="#ouvrirPlan"/><Label text="Réservations de 2 heures • Prix en euros"/></HBox></bottom>
+</BorderPane>

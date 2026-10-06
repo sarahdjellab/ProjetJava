@@ -1,0 +1,6 @@
+# CATEGORIE;nom;prix
+ENTREE;Salade de saison;8
+PLAT;Poulet rôti;16
+DESSERT;Tarte aux pommes;7
+ligne incorrecte
+PLAT;Prix incorrect;abc

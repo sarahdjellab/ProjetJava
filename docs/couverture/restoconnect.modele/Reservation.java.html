@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Reservation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.modele</a> &gt; <span class="el_source">Reservation.java</span></div><h1>Reservation.java</h1><pre class="source lang-java linenums">package restoconnect.modele;
+
+import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
+
+/**
+ * Représente une réservation dans le restaurant.
+ *
+ * Une réservation est liée à un client et à une table.
+ */
+@Entity
+public class Reservation {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /** Constructeur réservé à Hibernate. */
+<span class="fc" id="L20">    protected Reservation() { }</span>
+
+    /**
+     * @return identifiant technique, vide avant la première sauvegarde */
+    public java.util.Optional&lt;Long&gt; getId() {
+<span class="nc" id="L25">        return java.util.Optional.ofNullable(id);</span>
+    }
+
+
+    @Column(nullable = false)
+    private LocalDateTime dateHeure;
+    @Column(nullable = false)
+    private int nombrePersonnes;
+    // Agrégation : le client existe indépendamment de cette réservation.
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    private Client client;
+    // Agrégation : une réservation ne possède pas la table.
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    private Table table;
+
+    /**
+     * Construit une réservation.
+     *
+     *
+     * @param dateHeure date et heure de la réservation
+     *
+     * @param nombrePersonnes nombre de personnes
+     *
+     * @param client client qui réserve
+     *
+     * @param table table réservée
+     *
+     *
+     * @throws IllegalArgumentException si un paramètre est invalide
+     *                                  ou si le nombre de personnes
+     *                                  dépasse la capacité de la table
+     */
+    public Reservation(
+            LocalDateTime dateHeure,
+            int nombrePersonnes,
+            Client client,
+<span class="fc" id="L61">            Table table) {</span>
+
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if (dateHeure == null) {</span>
+<span class="nc" id="L64">            throw new IllegalArgumentException(</span>
+                    &quot;La date et l'heure sont obligatoires.&quot;
+            );
+        }
+
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        if (nombrePersonnes &lt;= 0) {</span>
+<span class="nc" id="L70">            throw new IllegalArgumentException(</span>
+                    &quot;Le nombre de personnes doit être positif.&quot;
+            );
+        }
+
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">        if (client == null) {</span>
+<span class="nc" id="L76">            throw new IllegalArgumentException(</span>
+                    &quot;Le client est obligatoire.&quot;
+            );
+        }
+
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        if (table == null) {</span>
+<span class="nc" id="L82">            throw new IllegalArgumentException(</span>
+                    &quot;La table est obligatoire.&quot;
+            );
+        }
+
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if (nombrePersonnes &gt; table.getCapacite()) {</span>
+<span class="nc" id="L88">            throw new IllegalArgumentException(</span>
+                    &quot;Le nombre de personnes dépasse la capacité de la table.&quot;
+            );
+        }
+
+<span class="fc" id="L93">        this.dateHeure = dateHeure;</span>
+<span class="fc" id="L94">        this.nombrePersonnes = nombrePersonnes;</span>
+<span class="fc" id="L95">        this.client = client;</span>
+<span class="fc" id="L96">        this.table = table;</span>
+<span class="fc" id="L97">    }</span>
+
+    /**
+     * Retourne la date et l'heure.
+     *
+     *
+     * @return date et heure
+     */
+    public LocalDateTime getDateHeure() {
+<span class="fc" id="L106">        return dateHeure;</span>
+    }
+
+    /**
+     * Modifie la date et l'heure.
+     *
+     *
+     * @param dateHeure nouvelle date
+     */
+    public void setDateHeure(LocalDateTime dateHeure) {
+
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        if (dateHeure == null) {</span>
+<span class="fc" id="L118">            throw new IllegalArgumentException(</span>
+                    &quot;La date est obligatoire.&quot;
+            );
+        }
+
+<span class="fc" id="L123">        this.dateHeure = dateHeure;</span>
+<span class="fc" id="L124">    }</span>
+
+    /**
+     * Retourne le nombre de personnes.
+     *
+     *
+     * @return nombre de personnes
+     */
+    public int getNombrePersonnes() {
+<span class="fc" id="L133">        return nombrePersonnes;</span>
+    }
+
+    /**
+     * Modifie le nombre de personnes.
+     *
+     *
+     * @param nombrePersonnes nouveau nombre
+     */
+    public void setNombrePersonnes(int nombrePersonnes) {
+
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        if (nombrePersonnes &lt;= 0) {</span>
+<span class="fc" id="L145">            throw new IllegalArgumentException(</span>
+                    &quot;Le nombre de personnes doit être positif.&quot;
+            );
+        }
+
+<span class="pc bpc" id="L150" title="1 of 4 branches missed.">        if (table != null &amp;&amp; nombrePersonnes &gt; table.getCapacite()) {</span>
+<span class="fc" id="L151">            throw new IllegalArgumentException(</span>
+                    &quot;Le nombre de personnes dépasse la capacité.&quot;
+            );
+        }
+
+<span class="fc" id="L156">        this.nombrePersonnes = nombrePersonnes;</span>
+<span class="fc" id="L157">    }</span>
+
+    /**
+     * Retourne le client.
+     *
+     *
+     * @return client
+     */
+    public Client getClient() {
+<span class="fc" id="L166">        return client;</span>
+    }
+
+    /**
+     * Retourne la table.
+     *
+     *
+     * @return table
+     */
+    public Table getTable() {
+<span class="fc" id="L176">        return table;</span>
+    }
+
+    /**
+     * @return fin du créneau ; une réservation dure deux heures */
+    public LocalDateTime getFin() {
+<span class="fc" id="L182">        return dateHeure.plusHours(2);</span>
+    }
+
+    /**
+     * Retourne une représentation textuelle de la réservation.
+     *
+     *
+     * @return informations de la réservation
+     */
+    @Override
+    public String toString() {
+<span class="nc" id="L193">        return &quot;Reservation{&quot; +</span>
+                &quot;dateHeure=&quot; + dateHeure +
+                &quot;, nombrePersonnes=&quot; + nombrePersonnes +
+<span class="nc" id="L196">                &quot;, client=&quot; + client.getNom() +</span>
+<span class="nc" id="L197">                &quot;, table=&quot; + table.getNumero() +</span>
+                '}';
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

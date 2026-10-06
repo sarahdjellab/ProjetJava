@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ValidationEntite.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">restoconnect</a> &gt; <a href="index.source.html" class="el_package">restoconnect.persistance</a> &gt; <span class="el_source">ValidationEntite.java</span></div><h1>ValidationEntite.java</h1><pre class="source lang-java linenums">package restoconnect.persistance;
+import restoconnect.modele.*;
+import restoconnect.service.Validation;
+/** Vérifie les invariants avant chaque écriture, y compris les objets réhydratés. */
+public final class ValidationEntite {
+    private ValidationEntite() { }
+    /**
+     * @param entite objet à sauvegarder */
+    public static void verifier(Object entite) {
+<span class="fc" id="L10">        Validation.requis(entite, &quot;Entité&quot;);</span>
+<span class="fc bfc" id="L11" title="All 2 branches covered.">        if (entite instanceof Client client) {</span>
+<span class="fc" id="L12">            new Client(client.getNom(), client.getTelephone(), client.getEmail());</span>
+<span class="fc bfc" id="L13" title="All 2 branches covered.">        } else if (entite instanceof Serveur serveur) {</span>
+<span class="fc" id="L14">            new Serveur(serveur.getNom(), serveur.getMatricule());</span>
+<span class="fc bfc" id="L15" title="All 2 branches covered.">        } else if (entite instanceof Table table) {</span>
+<span class="fc" id="L16">            new Table(table.getNumero(), table.getCapacite());</span>
+<span class="fc bfc" id="L17" title="All 2 branches covered.">        } else if (entite instanceof ArticleMenu article) {</span>
+<span class="fc" id="L18">            Validation.texte(article.getNom(), &quot;Nom&quot;);</span>
+<span class="pc bpc" id="L19" title="2 of 4 branches missed.">            if (!Double.isFinite(article.getPrixBase()) || article.getPrixBase() &lt;= 0</span>
+<span class="pc bpc" id="L20" title="2 of 4 branches missed.">                    || !Double.isFinite(article.calculerPrixTTC()) || article.calculerPrixTTC() &lt;= 0) {</span>
+<span class="nc" id="L21">                throw new IllegalArgumentException(&quot;Prix invalide.&quot;);</span>
+            }
+<span class="fc bfc" id="L23" title="All 2 branches covered.">        } else if (entite instanceof Reservation reservation) {</span>
+<span class="fc" id="L24">            new Reservation(reservation.getDateHeure(), reservation.getNombrePersonnes(), reservation.getClient(), reservation.getTable());</span>
+<span class="fc" id="L25">            verifier(reservation.getClient());</span>
+<span class="fc" id="L26">            verifier(reservation.getTable());</span>
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">        } else if (entite instanceof Commande commande) {</span>
+<span class="fc" id="L28">            verifier(commande.getReservation());</span>
+<span class="fc" id="L29">            verifier(commande.getServeur());</span>
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">            if (commande.getLigneCommandes().isEmpty()) { throw new IllegalArgumentException(&quot;Une commande vide ne peut pas être sauvegardée.&quot;); }</span>
+<span class="fc" id="L31">            commande.getLigneCommandes().forEach(l -&gt; { verifier(l.getArticleMenu()); Validation.positif(l.getQuantite()); });</span>
+<span class="nc" id="L32">        } else { throw new IllegalArgumentException(&quot;Type d'entité non pris en charge.&quot;); }</span>
+<span class="fc" id="L33">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
